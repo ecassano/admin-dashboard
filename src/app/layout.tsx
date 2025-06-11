@@ -1,7 +1,9 @@
+import { AppSidebar } from '@/components/Sidebar';
 import './globals.css';
 import type { Metadata } from 'next';
 import { Roboto } from 'next/font/google';
-import Sidebar from '@/components/Sidebar/Sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { Header } from '@/components/Header';
 
 const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
@@ -22,10 +24,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={roboto.className}>
-        <Sidebar />
-        <div style={{ marginLeft: '250px', padding: '2rem' }}>
-          {children}
-        </div>
+        <SidebarProvider>
+          <AppSidebar />
+          <div className="w-full flex flex-col gap-4">
+            <Header />
+            {children}
+          </div>
+        </SidebarProvider>
       </body>
     </html>
   );

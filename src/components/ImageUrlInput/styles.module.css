@@ -1,0 +1,38 @@
+.inputWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.input {
+  padding-right: 2.5rem;
+  transition: all 0.2s ease-in-out;
+}
+
+/* .input.valid {
+  border-color: var(--secondary-400);
+} */
+
+.input.valid:focus {
+  border-color: var(--secondary-400);
+  box-shadow: 0 0 0 2px var(--secondary-300);
+}
+
+/* .input.invalid {
+  border-color: var(--error-400);
+} */
+
+.input.invalid:focus {
+  border-color: var(--error-400);
+  box-shadow: 0 0 0 2px var(--error-200);
+}
+
+.iconWrapper {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+} 

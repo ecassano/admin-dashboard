@@ -1,12 +1,15 @@
 'use client';
-import { useState } from 'react';
+// import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import styles from './styles.module.css';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ImageUrlInput } from '@/components/ImageUrlInput';
 
-type ImagePreview = {
-  url: string;
-  file: File;
-} | null;
+// type ImagePreview = {
+//   url: string;
+//   file: File;
+// } | null;
 
 type FormData = {
   description: string;
@@ -16,8 +19,8 @@ type FormData = {
 };
 
 export default function CampaignForm() {
-  const [verticalBanner, setVerticalBanner] = useState<ImagePreview>(null);
-  const [horizontalBanner, setHorizontalBanner] = useState<ImagePreview>(null);
+  // const [verticalBanner, setVerticalBanner] = useState<ImagePreview>(null);
+  // const [horizontalBanner, setHorizontalBanner] = useState<ImagePreview>(null);
 
   const {
     control,
@@ -33,99 +36,45 @@ export default function CampaignForm() {
     }
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setImage: (preview: ImagePreview) => void) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage({
-          url: reader.result as string,
-          file
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const onSubmit = async (data: FormData) => {
-    const formData = new FormData();
-    if (verticalBanner?.file) formData.append('verticalBanner', verticalBanner.file);
-    if (horizontalBanner?.file) formData.append('horizontalBanner', horizontalBanner.file);
-    formData.append('description', data.description);
-    formData.append('status', data.status);
-    formData.append('startDate', data.startDate);
-    formData.append('endDate', data.endDate);
-
-    console.log('Form submitted:', {
-      ...data,
-      verticalBanner: verticalBanner?.file.name,
-      horizontalBanner: horizontalBanner?.file.name
-    });
+    console.log(data);
   };
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>Nova Campanha</h1>
+        <h1>Campanhas</h1>
       </header>
 
       <div className={styles.content}>
         <div className={styles.card}>
           <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-            <div className={styles.imageUploads}>
-              <div className={styles.uploadField}>
-                <label>Banner Vertical</label>
-                <div className={styles.uploadArea}>
-                  {verticalBanner ? (
-                    <div className={styles.previewContainer}>
-                      <img src={verticalBanner.url} alt="Preview vertical" className={styles.preview} />
-                      <button
-                        type="button"
-                        className={styles.removeButton}
-                        onClick={() => setVerticalBanner(null)}
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  ) : (
-                    <div className={styles.uploadPlaceholder}>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, setVerticalBanner)}
-                      />
-                      <p>Clique ou arraste a imagem aqui</p>
-                    </div>
-                  )}
-                </div>
+            <div>
+              <div className="grid w-full items-center gap-3 mb-4">
+                <Label htmlFor="Title">Título</Label>
+                <Input type="text" id="title" placeholder="Título da campanha" />
               </div>
+            </div>
 
-              <div className={styles.uploadField}>
-                <label>Banner Horizontal</label>
-                <div className={styles.uploadArea}>
-                  {horizontalBanner ? (
-                    <div className={styles.previewContainer}>
-                      <img src={horizontalBanner.url} alt="Preview horizontal" className={styles.preview} />
-                      <button
-                        type="button"
-                        className={styles.removeButton}
-                        onClick={() => setHorizontalBanner(null)}
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  ) : (
-                    <div className={styles.uploadPlaceholder}>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, setHorizontalBanner)}
-                      />
-                      <p>Clique ou arraste a imagem aqui</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+            <div className="grid grid-cols-2 gap-4 mb-4 w-full">
+              <ImageUrlInput
+                id="bannerHorizontal"
+                label="Banner Horizontal"
+                placeholder="https://example.com/image.jpg"
+                onChange={(value: string, isValid: boolean) => {
+                  // Handle the value and validation state
+                  console.log('Horizontal banner:', value, isValid);
+                }}
+              />
+              <ImageUrlInput
+                id="bannerVertical"
+                label="Banner Vertical"
+                placeholder="https://example.com/image.jpg"
+                onChange={(value: string, isValid: boolean) => {
+                  // Handle the value and validation state
+                  console.log('Vertical banner:', value, isValid);
+                }}
+              />
             </div>
 
             <div className={styles.field}>

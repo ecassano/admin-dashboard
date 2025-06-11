@@ -81,12 +81,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
 h1, h2, h3, h4, h5, h6 {
   font-weight: var(--font-medium);
 }
@@ -172,6 +166,30 @@ a {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  :root {
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+  }
+ 
+  .dark {
+    --sidebar: var(--black);
+    --sidebar-foreground: var(--text-300);
+    --sidebar-primary: var(--primary-400);
+    --sidebar-primary-foreground: var(--white);
+    --sidebar-accent: var(--primary-600);
+    --sidebar-accent-foreground: var(--white);
+    --sidebar-border: var(--text-700);
+    --sidebar-ring: var(--primary-600);
+  }
 }
 
 @layer base {
