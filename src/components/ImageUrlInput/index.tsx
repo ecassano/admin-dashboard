@@ -13,6 +13,7 @@ interface ImageUrlInputProps {
   label: string;
   placeholder?: string;
   onChange?: (value: string, isValid: boolean) => void;
+  defaultValue?: string;
 }
 
 type ValidationState = 'idle' | 'loading' | 'valid' | 'invalid';
@@ -28,10 +29,17 @@ const colors = {
   },
 }
 
-export function ImageUrlInput({ id, label, placeholder, onChange }: ImageUrlInputProps) {
-  const [inputValue, setInputValue] = useState('');
+export function ImageUrlInput({ id, label, placeholder, onChange, defaultValue }: ImageUrlInputProps) {
+  const [inputValue, setInputValue] = useState(defaultValue || '');
   const [validationState, setValidationState] = useState<ValidationState>('idle');
   const debouncedValue = useDebounce(inputValue, 500);
+
+  useEffect(() => {
+    if (defaultValue) {
+      setInputValue(defaultValue);
+      validateImageUrl(defaultValue);
+    }
+  }, [defaultValue]);
 
   const validateImageUrl = useCallback(async (url: string) => {
     if (!url) {
@@ -46,11 +54,7 @@ export function ImageUrlInput({ id, label, placeholder, onChange }: ImageUrlInpu
       const response = await fetch(url, { method: 'HEAD' });
       const contentType = response.headers.get('content-type');
       const isValid = response.ok && contentType?.startsWith('image/');
-
-      setTimeout(() => {
-        setValidationState(isValid ? 'valid' : 'invalid');
-      }, 1000);
-
+      setValidationState(isValid ? 'valid' : 'invalid');
       onChange?.(url, isValid ?? false);
     } catch (error) {
       console.error(error);
