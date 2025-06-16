@@ -1,15 +1,17 @@
 'use client';
 // import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import styles from './styles.module.css';
+import { ImageUrlInput } from '@/components/ImageUrlInput';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ImageUrlInput } from '@/components/ImageUrlInput';
-
-// type ImagePreview = {
-//   url: string;
-//   file: File;
-// } | null;
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChevronDownIcon } from 'lucide-react';
+import { useState } from 'react';
 
 type FormData = {
   description: string;
@@ -19,14 +21,15 @@ type FormData = {
 };
 
 export default function CampaignForm() {
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [open, setOpen] = useState(false);
+  const [endOpen, setEndOpen] = useState(false);
   // const [verticalBanner, setVerticalBanner] = useState<ImagePreview>(null);
   // const [horizontalBanner, setHorizontalBanner] = useState<ImagePreview>(null);
 
   const {
-    control,
     handleSubmit,
-    formState: { errors },
-    watch,
   } = useForm<FormData>({
     defaultValues: {
       description: '',
@@ -41,28 +44,27 @@ export default function CampaignForm() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className="w-full max-w-[1200px] mx-auto px-4 ">
       <header className={styles.header}>
         <h1>Campanhas</h1>
       </header>
 
       <div className={styles.content}>
-        <div className={styles.card}>
+        <div className="bg-white rounded-lg shadow-sm overflow-visible relative mb-">
           <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
             <div>
-              <div className="grid w-full items-center gap-3 mb-4">
+              <div className="grid w-full items-center gap-3 mb-6">
                 <Label htmlFor="Title">Título</Label>
                 <Input type="text" id="title" placeholder="Título da campanha" />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4 w-full">
+            <div className="grid grid-cols-2 gap-4 mb-6 w-full">
               <ImageUrlInput
                 id="bannerHorizontal"
                 label="Banner Horizontal"
                 placeholder="https://example.com/image.jpg"
                 onChange={(value: string, isValid: boolean) => {
-                  // Handle the value and validation state
                   console.log('Horizontal banner:', value, isValid);
                 }}
               />
@@ -71,96 +73,88 @@ export default function CampaignForm() {
                 label="Banner Vertical"
                 placeholder="https://example.com/image.jpg"
                 onChange={(value: string, isValid: boolean) => {
-                  // Handle the value and validation state
                   console.log('Vertical banner:', value, isValid);
                 }}
               />
             </div>
 
-            <div className={styles.field}>
-              <label htmlFor="description">Descrição</label>
-              <Controller
-                name="description"
-                control={control}
-                rules={{ required: 'Descrição é obrigatória' }}
-                render={({ field }) => (
-                  <textarea
-                    {...field}
-                    id="description"
-                    rows={4}
-                    placeholder="Digite a descrição da campanha"
-                    className={errors.description ? styles.errorInput : ''}
-                  />
-                )}
-              />
-              {errors.description && (
-                <span className={styles.errorMessage}>{errors.description.message}</span>
-              )}
+            <div className="grid w-full mb-6 gap-3">
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea className='h-24 resize-none' placeholder="Digite a descrição da campanha" id="description" />
             </div>
 
-            <div className={styles.fieldRow}>
-              <div className={styles.field}>
-                <label htmlFor="status">Status</label>
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
-                    <select {...field} id="status">
-                      <option value="active">Ativo</option>
-                      <option value="inactive">Inativo</option>
-                      <option value="draft">Rascunho</option>
-                    </select>
-                  )}
-                />
+            <div className="grid grid-cols-3 gap-4 mb-16">
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="status" className='px-1'>Status</Label>
+                <Select>
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="inactive">Inativo</SelectItem>
+                    <SelectItem value="draft">Rascunho</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className={styles.field}>
-                <label htmlFor="startDate">Data Inicial</label>
-                <Controller
-                  name="startDate"
-                  control={control}
-                  rules={{ required: 'Data inicial é obrigatória' }}
-                  render={({ field }) => (
-                    <input
-                      {...field}
-                      type="date"
-                      id="startDate"
-                      className={errors.startDate ? styles.errorInput : ''}
+
+              <div className="flex flex-col gap-3">
+                <Label className="px-1">
+                  Data de Início
+                </Label>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      id="date"
+                      className="w-full justify-between font-normal"
+                    >
+                      {date ? date.toLocaleDateString() : "Selecione a data"}
+                      <ChevronDownIcon />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      captionLayout="dropdown"
+                      onSelect={(date) => {
+                        setDate(date)
+                        setOpen(false)
+                      }}
                     />
-                  )}
-                />
-                {errors.startDate && (
-                  <span className={styles.errorMessage}>{errors.startDate.message}</span>
-                )}
+                  </PopoverContent>
+                </Popover>
               </div>
 
-              <div className={styles.field}>
-                <label htmlFor="endDate">Data Final</label>
-                <Controller
-                  name="endDate"
-                  control={control}
-                  rules={{
-                    required: 'Data final é obrigatória',
-                    validate: (value) => {
-                      const startDate = watch('startDate');
-                      if (startDate && value < startDate) {
-                        return 'Data final deve ser posterior à data inicial';
-                      }
-                      return true;
-                    }
-                  }}
-                  render={({ field }) => (
-                    <input
-                      {...field}
-                      type="date"
+              <div className="flex flex-col gap-3">
+                <Label className="px-1">
+                  Data de Término
+                </Label>
+                <Popover open={endOpen} onOpenChange={setEndOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
                       id="endDate"
-                      className={errors.endDate ? styles.errorInput : ''}
+                      className="w-full justify-between font-normal"
+                    >
+                      {endDate ? endDate.toLocaleDateString() : "Selecione a data"}
+                      <ChevronDownIcon />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      captionLayout="dropdown"
+                      onSelect={(date) => {
+                        setEndDate(date)
+                        setEndOpen(false)
+                      }}
                     />
-                  )}
-                />
-                {errors.endDate && (
-                  <span className={styles.errorMessage}>{errors.endDate.message}</span>
-                )}
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
