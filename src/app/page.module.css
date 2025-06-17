@@ -68,10 +68,7 @@
   padding: 0 20px;
   border: none;
   border: 1px solid transparent;
-  transition:
-    background 0.2s,
-    color 0.2s,
-    border-color 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -165,26 +162,6 @@ a.secondary {
   .logo {
     filter: invert();
   }
-}
-
-.container {
-  width: 100%;
-  min-height: calc(100vh - var(--header-height));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  background-color: var(--bg);
-}
-
-.content {
-  max-width: 900px;
-  text-align: center;
-  animation: fadeIn 1s ease-in-out;
-}
-
-.welcomeText {
-  margin-bottom: 2rem;
 }
 
 .subtitle {

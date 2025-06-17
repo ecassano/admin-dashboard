@@ -2,121 +2,276 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ImageUrlInput } from "@/components/ImageUrlInput";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ImageUrlInput } from "@/components/ImageUrlInput/ImageUrlInput";
 import { DatePicker } from "@/components/DatePicker";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Campaign, FormData } from "./page";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
+
+export type ValidationState = "idle" | "loading" | "valid" | "invalid";
 
 type CampaignFormProps = {
-  defaultValues: Campaign | null;
-}
+  prefilledValues: Campaign | null;
+  handleSetPrefilledValues: (campaign: Campaign) => void;
+};
 
-export const CampaignForm = ({ defaultValues }: CampaignFormProps) => {
-  const {
-    handleSubmit,
-    register,
-    setValue,
-  } = useForm<FormData>({
-    defaultValues: {
-      title: defaultValues?.descricao || '',
-      verticalBanner: defaultValues?.urlImagem || '',
-      horizontalBanner: defaultValues?.urlImagem || '',
-      description: defaultValues?.descricao || '',
-      status: defaultValues?.status ? 'active' : 'inactive',
-      startDate: defaultValues?.dataInicial.toISOString() || '',
-      endDate: defaultValues?.dataFinal.toISOString() || '',
-    }
-  });
+export const CampaignForm = ({
+  prefilledValues,
+  handleSetPrefilledValues,
+}: CampaignFormProps) => {
+  const { handleSubmit, register, setValue, control, getValues, watch } =
+    useForm<FormData>({
+      defaultValues: {
+        title: prefilledValues?.descricao || "",
+        verticalBanner: prefilledValues?.urlImagem || "",
+        horizontalBanner: prefilledValues?.urlImagem || "",
+        link: prefilledValues?.link || "",
+        description: prefilledValues?.descricao || "",
+        status: prefilledValues?.status ? "active" : "inactive",
+        startDate: prefilledValues?.dataInicial.toISOString() || "",
+        endDate: prefilledValues?.dataFinal.toISOString() || "",
+      },
+    });
 
-  const handleImageUrlChange = useCallback((value: string, isValid: boolean, type: 'vertical' | 'horizontal') => {
-    if (isValid) {
-      setValue(type === 'vertical' ? 'verticalBanner' : 'horizontalBanner', value);
-    }
-  }, [setValue]);
+  const bannerHorizontal = watch("horizontalBanner");
+  const bannerVertical = watch("verticalBanner");
+
+  const [verticalValidationState, setVerticalValidationState] =
+    useState<ValidationState>("idle");
+  const [horizontalValidationState, setHorizontalValidationState] =
+    useState<ValidationState>("idle");
+
+  const debouncedValueHorizontal = useDebounce(bannerHorizontal, 500);
+  const debouncedValueVertical = useDebounce(bannerVertical, 500);
+
+  const validateImageUrl = useCallback(
+    async (url: string, type: "vertical" | "horizontal") => {
+      if (!url) {
+        type === "vertical"
+          ? setVerticalValidationState("idle")
+          : setHorizontalValidationState("idle");
+        return;
+      }
+
+      type === "vertical"
+        ? setVerticalValidationState("loading")
+        : setHorizontalValidationState("loading");
+
+      try {
+        const response = await fetch(url, { method: "HEAD" });
+        const contentType = response.headers.get("content-type");
+        const isValid = response.ok && contentType?.startsWith("image/");
+        type === "vertical"
+          ? setVerticalValidationState(isValid ? "valid" : "invalid")
+          : setHorizontalValidationState(isValid ? "valid" : "invalid");
+      } catch (error) {
+        console.error(error);
+        type === "vertical"
+          ? setVerticalValidationState("invalid")
+          : setHorizontalValidationState("invalid");
+      }
+    },
+    [getValues, setValue]
+  );
+
+  useEffect(() => {
+    validateImageUrl(debouncedValueHorizontal, "horizontal");
+  }, [debouncedValueHorizontal, validateImageUrl]);
+
+  useEffect(() => {
+    validateImageUrl(debouncedValueVertical, "vertical");
+  }, [debouncedValueVertical, validateImageUrl]);
+
+  const handleImageUrlChange = useCallback(
+    (value: string, isValid: boolean, type: "vertical" | "horizontal") => {
+      if (isValid) {
+        setValue(
+          type === "vertical" ? "verticalBanner" : "horizontalBanner",
+          value
+        );
+      }
+    },
+    [setValue]
+  );
 
   const onSubmit = useCallback(async (data: FormData) => {
     console.log(data);
   }, []);
 
   useEffect(() => {
-    if (defaultValues) {
-      console.log(defaultValues);
-      setValue('title', defaultValues.descricao);
-      setValue('verticalBanner', defaultValues.urlImagem);
-      setValue('horizontalBanner', defaultValues.urlImagem);
-      setValue('description', defaultValues.descricao);
-      setValue('status', defaultValues.status ? 'active' : 'inactive');
-      setValue('startDate', defaultValues.dataInicial.toISOString());
-      setValue('endDate', defaultValues.dataFinal.toISOString());
+    if (prefilledValues) {
+      setValue("title", prefilledValues.descricao);
+      setValue("verticalBanner", prefilledValues.urlImagem);
+      setValue("horizontalBanner", prefilledValues.urlImagem);
+      setValue("description", prefilledValues.descricao);
+      setValue("status", prefilledValues.status ? "active" : "inactive");
+      setValue("startDate", prefilledValues.dataInicial.toISOString());
+      setValue("endDate", prefilledValues.dataFinal.toISOString());
+    } else {
+      setValue("title", "");
+      setValue("verticalBanner", "");
+      setValue("horizontalBanner", "");
+      setValue("description", "");
+      setValue("status", "inactive");
+      setValue("startDate", "");
+      setValue("endDate", "");
     }
-  }, [defaultValues, setValue]);
+  }, [prefilledValues, setValue]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div>
         <div className="grid w-full items-center gap-3 mb-6">
           <Label htmlFor="Title">Título</Label>
-          <Input type="text" id="title" placeholder="Título da campanha" {...register('title')} />
+          <Input
+            type="text"
+            id="title"
+            placeholder="Título da campanha"
+            {...register("title")}
+          />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-6 w-full">
-        <ImageUrlInput
-          id="bannerHorizontal"
-          label="Banner Horizontal"
-          placeholder="https://example.com/image.jpg"
-          onChange={(value, isValid) => handleImageUrlChange(value, isValid, 'horizontal')}
-          defaultValue={defaultValues?.urlImagem}
+        <Controller
+          name="horizontalBanner"
+          control={control}
+          defaultValue={prefilledValues?.urlImagem}
+          render={({ field }) => (
+            <ImageUrlInput
+              id={field.name}
+              value={field.value}
+              onChange={field.onChange}
+              validationState={horizontalValidationState}
+              label="Banner Horizontal"
+              placeholder="https://example.com/image.jpg"
+            />
+          )}
         />
-        <ImageUrlInput
-          id="bannerVertical"
-          label="Banner Vertical"
-          placeholder="https://example.com/image.jpg"
-          onChange={(value, isValid) => handleImageUrlChange(value, isValid, 'vertical')}
-          defaultValue={defaultValues?.urlImagem}
+        <Controller
+          name="verticalBanner"
+          control={control}
+          defaultValue={prefilledValues?.urlImagem}
+          render={({ field }) => (
+            <ImageUrlInput
+              id={field.name}
+              value={field.value}
+              onChange={field.onChange}
+              validationState={verticalValidationState}
+              label="Banner Vertical"
+              placeholder="https://example.com/image.jpg"
+            />
+          )}
+        />
+      </div>
+
+      <div className="grid w-full items-center gap-3 mb-6">
+        <Label htmlFor="link">Link da Campanha</Label>
+        <Input
+          type="text"
+          id="link"
+          placeholder="https://example.com/campanha"
+          {...register("link")}
         />
       </div>
 
       <div className="grid w-full mb-6 gap-3">
         <Label htmlFor="description">Descrição</Label>
-        <Textarea className='h-24 resize-none' placeholder="Digite a descrição da campanha" id="description" {...register('description')} />
+        <Textarea
+          className="h-24 resize-none"
+          placeholder="Digite a descrição da campanha"
+          id="description"
+          {...register("description")}
+        />
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-16">
         <div className="flex flex-col gap-3">
-          <Label htmlFor="status" className='px-1'>Status</Label>
-          <Select defaultValue="active" {...register('status')}>
-            <SelectTrigger className='w-full'>
-              <SelectValue placeholder="Selecione o status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">Ativo</SelectItem>
-              <SelectItem value="inactive">Inativo</SelectItem>
-              <SelectItem value="draft">Rascunho</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label htmlFor="status" className="px-1">
+            Status
+          </Label>
+          <Controller
+            name="status"
+            defaultValue={
+              prefilledValues?.status
+                ? prefilledValues.status
+                  ? "active"
+                  : "inactive"
+                : undefined
+            }
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Ativo</SelectItem>
+                  <SelectItem value="inactive">Inativo</SelectItem>
+                  <SelectItem value="draft">Rascunho</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
 
-        <DatePicker
+        <Controller
           name="startDate"
-          setValue={setValue}
-          defaultValue={defaultValues?.dataInicial}
+          control={control}
+          render={({ field }) => (
+            <div>
+              <DatePicker
+                date={field.value ? new Date(field.value) : undefined}
+                onChange={field.onChange}
+                name={field.name}
+                defaultValue={prefilledValues?.dataInicial}
+              />
+            </div>
+          )}
         />
 
-        <DatePicker
+        <Controller
           name="endDate"
-          setValue={setValue}
-          defaultValue={defaultValues?.dataFinal}
+          control={control}
+          render={({ field }) => (
+            <div>
+              <DatePicker
+                date={field.value ? new Date(field.value) : undefined}
+                onChange={field.onChange}
+                name={field.name}
+                defaultValue={prefilledValues?.dataFinal}
+              />
+            </div>
+          )}
         />
       </div>
 
-      <div className="flex gap-4">
-        <Button type="submit" className="bg-[var(--primary-400)] text-white hover:bg-[var(--primary-600)] cursor-pointer">
-          Salvar Campanha
+      <div className="flex gap-4 justify-end">
+        <Button
+          type="submit"
+          className="bg-[var(--primary-400)] text-white hover:bg-[var(--primary-600)] cursor-pointer"
+        >
+          {prefilledValues ? "Atualizar Campanha" : "Salvar Campanha"}
         </Button>
+        {prefilledValues && (
+          <Button
+            variant="ghost"
+            type="button"
+            className="text-[var(--error-400)] hover:text-[var(--error-600)] hover:bg-transparent cursor-pointer"
+            onClick={() => handleSetPrefilledValues(null)}
+          >
+            Limpar
+          </Button>
+        )}
       </div>
     </form>
-  )
-}
+  );
+};

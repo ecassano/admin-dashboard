@@ -8,25 +8,26 @@ import { ChevronDownIcon } from "lucide-react";
 import { LABELS } from "@/utils/constants";
 
 type DatePickerProps<T extends FieldValues> = {
-  setValue: UseFormSetValue<T>;
   name: Path<T>;
+  date?: Date;
+  onChange: (date: Date) => void;
   defaultValue?: Date;
 };
 
 function DatePickerInner<T extends FieldValues>({
-  setValue,
   name,
+  date,
+  onChange,
   defaultValue,
 }: DatePickerProps<T>) {
-  const [date, setDate] = useState<Date | undefined>(defaultValue);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    if (defaultValue) {
-      setDate(defaultValue);
-      setValue(name, defaultValue.toISOString() as PathValue<T, typeof name>);
-    }
-  }, [defaultValue, name, setValue]);
+  // useEffect(() => {
+  //   if (defaultValue) {
+  //     setDate(defaultValue);
+  //     setValue(name, defaultValue.toISOString() as PathValue<T, typeof name>);
+  //   }
+  // }, [defaultValue, name, setValue]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -47,11 +48,10 @@ function DatePickerInner<T extends FieldValues>({
             mode="single"
             selected={date}
             captionLayout="dropdown"
-            onSelect={(date) => {
-              if (date) {
-                setDate(date);
+            onSelect={(selectedDate) => {
+              if (selectedDate) {
+                onChange(selectedDate);
                 setOpen(false);
-                setValue(name, date.toISOString() as PathValue<T, typeof name>);
               }
             }}
           />

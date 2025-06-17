@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   Sidebar,
@@ -9,18 +9,18 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-} from '@/components/ui/sidebar'
-import { Home, Banknote } from 'lucide-react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+} from "@/components/ui/sidebar";
+import { Home, Banknote } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const menuItems = [
-  { title: 'Início', href: '/', icon: Home },
-  { title: 'Contracheque', href: '/contracheque', icon: Banknote },
-]
+  { title: "Início", href: "/", icon: Home },
+  { title: "Contracheque", href: "/contracheque", icon: Banknote },
+];
 
 export function AppSidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <Sidebar collapsible="icon">
@@ -33,10 +33,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.href}
-                  >
+                  <SidebarMenuButton asChild isActive={pathname === item.href}>
                     <Link href={item.href}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -49,5 +46,5 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }
