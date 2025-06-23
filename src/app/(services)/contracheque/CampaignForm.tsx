@@ -33,11 +33,19 @@ export const CampaignForm = ({
         title: prefilledValues?.descricao || "",
         verticalBanner: prefilledValues?.urlImagem || "",
         horizontalBanner: prefilledValues?.urlImagem || "",
-        link: prefilledValues?.link || "",
+        // link: prefilledValues?.link || "",
         description: prefilledValues?.descricao || "",
         status: prefilledValues?.status ? "active" : "inactive",
-        startDate: prefilledValues?.dataInicial.toISOString() || "",
-        endDate: prefilledValues?.dataFinal.toISOString() || "",
+        startDate: prefilledValues?.dataInicial
+          ? typeof prefilledValues.dataInicial === "string"
+            ? prefilledValues.dataInicial
+            : new Date(prefilledValues.dataInicial).toISOString()
+          : "",
+        endDate: prefilledValues?.dataFinal
+          ? typeof prefilledValues.dataFinal === "string"
+            ? prefilledValues.dataFinal
+            : new Date(prefilledValues.dataFinal).toISOString()
+          : "",
       },
     });
 
@@ -113,8 +121,18 @@ export const CampaignForm = ({
       setValue("horizontalBanner", prefilledValues.urlImagem);
       setValue("description", prefilledValues.descricao);
       setValue("status", prefilledValues.status ? "active" : "inactive");
-      setValue("startDate", prefilledValues.dataInicial.toISOString());
-      setValue("endDate", prefilledValues.dataFinal.toISOString());
+      setValue(
+        "startDate",
+        typeof prefilledValues.dataInicial === "string"
+          ? prefilledValues.dataInicial
+          : prefilledValues.dataInicial.toISOString()
+      );
+      setValue(
+        "endDate",
+        typeof prefilledValues.dataFinal === "string"
+          ? prefilledValues.dataFinal
+          : prefilledValues.dataFinal.toISOString()
+      );
     } else {
       setValue("title", "");
       setValue("verticalBanner", "");
