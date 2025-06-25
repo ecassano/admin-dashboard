@@ -5,6 +5,7 @@ import { Roboto } from "next/font/google";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Header } from "@/components/Header";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
+import { Toaster } from "@/components/ui/sonner";
 
 const roboto = Roboto({
   weight: ["300", "400", "500", "700"],
@@ -32,6 +33,7 @@ export default function RootLayout({
               <Header />
               {children}
             </div>
+            <Toaster position="top-right" richColors />
           </SidebarProvider>
         </ReactQueryProvider>
       </body>
