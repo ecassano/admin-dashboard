@@ -1,3 +1,4 @@
+"use client";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,9 +13,17 @@ import {
 import { ImageUrlInput } from "@/components/ImageUrlInput/ImageUrlInput";
 import { DatePicker } from "@/components/DatePicker";
 import { Controller, useForm } from "react-hook-form";
-import { Campaign, FormData } from "./page";
+import { FormData } from "./page";
 import { useCallback, useEffect, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Campaign } from "@/utils/types";
+import { schema } from "@/schemas/campaign_form.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { criarCampanha } from "@/api/criarCampanha";
+import { toast } from "sonner";
+import { parseDateAsLocal } from "@/utils/parseDate";
 
 export type ValidationState = "idle" | "loading" | "valid" | "invalid";
 
@@ -27,25 +36,18 @@ export const CampaignForm = ({
   prefilledValues,
   handleSetPrefilledValues,
 }: CampaignFormProps) => {
-  const { handleSubmit, register, setValue, control, getValues, watch } =
+  const { handleSubmit, register, setValue, control, watch, formState: { errors }, reset } =
     useForm<FormData>({
+      resolver: zodResolver(schema),
       defaultValues: {
-        title: prefilledValues?.descricao || "",
-        verticalBanner: prefilledValues?.urlImagem || "",
-        horizontalBanner: prefilledValues?.urlImagem || "",
-        // link: prefilledValues?.link || "",
+        title: prefilledValues?.nomeCampanha || "",
         description: prefilledValues?.descricao || "",
-        status: prefilledValues?.status ? "active" : "inactive",
-        startDate: prefilledValues?.dataInicial
-          ? typeof prefilledValues.dataInicial === "string"
-            ? prefilledValues.dataInicial
-            : new Date(prefilledValues.dataInicial).toISOString()
-          : "",
-        endDate: prefilledValues?.dataFinal
-          ? typeof prefilledValues.dataFinal === "string"
-            ? prefilledValues.dataFinal
-            : new Date(prefilledValues.dataFinal).toISOString()
-          : "",
+        horizontalBanner: prefilledValues?.urlImagem || "",
+        verticalBanner: prefilledValues?.urlImagem || "",
+        link: prefilledValues?.urlLink || "",
+        status: prefilledValues?.status ? prefilledValues.status ? "active" : "inactive" : "active",
+        startDate: prefilledValues?.dataInicial ? new Date(prefilledValues.dataInicial) : undefined,
+        endDate: prefilledValues?.dataFinal ? new Date(prefilledValues.dataFinal) : undefined,
       },
     });
 
@@ -60,34 +62,76 @@ export const CampaignForm = ({
   const debouncedValueHorizontal = useDebounce(bannerHorizontal, 500);
   const debouncedValueVertical = useDebounce(bannerVertical, 500);
 
+  const queryClient = useQueryClient();
+
+  const createCampaignMutation = useMutation({
+    mutationFn: criarCampanha,
+    onSuccess: () => {
+      toast.success("Campanha criada com sucesso!", {
+        style: {
+          background: "var(--secondary-400)",
+          color: "var(--white)",
+          border: "none",
+        }
+      });
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+    onError: (err) => {
+      console.error("Erro ao criar campanha", err);
+      toast.error("Erro ao criar campanha", {
+        style: {
+          background: "var(--error-400)",
+          color: "var(--white)",
+          border: "none",
+        }
+      });
+    },
+  });
+
+  // const updateCampaignMutation = useMutation({
+  //   mutationFn: atualizarCampanha,
+  //   onSuccess: (res) => {
+  //     console.log("Campanha atualizada com sucesso!", res);
+  //   },
+  //   onError: (err) => {
+  // });
+
   const validateImageUrl = useCallback(
     async (url: string, type: "vertical" | "horizontal") => {
       if (!url) {
-        type === "vertical"
-          ? setVerticalValidationState("idle")
-          : setHorizontalValidationState("idle");
+        if (type === "vertical") {
+          setVerticalValidationState("idle");
+        } else {
+          setHorizontalValidationState("idle");
+        }
         return;
       }
 
-      type === "vertical"
-        ? setVerticalValidationState("loading")
-        : setHorizontalValidationState("loading");
+      if (type === "vertical") {
+        setVerticalValidationState("loading");
+      } else {
+        setHorizontalValidationState("loading");
+      }
 
       try {
         const response = await fetch(url, { method: "HEAD" });
         const contentType = response.headers.get("content-type");
         const isValid = response.ok && contentType?.startsWith("image/");
-        type === "vertical"
-          ? setVerticalValidationState(isValid ? "valid" : "invalid")
-          : setHorizontalValidationState(isValid ? "valid" : "invalid");
+        if (type === "vertical") {
+          setVerticalValidationState(isValid ? "valid" : "invalid");
+        } else {
+          setHorizontalValidationState(isValid ? "valid" : "invalid");
+        }
       } catch (error) {
         console.error(error);
-        type === "vertical"
-          ? setVerticalValidationState("invalid")
-          : setHorizontalValidationState("invalid");
+        if (type === "vertical") {
+          setVerticalValidationState("invalid");
+        } else {
+          setHorizontalValidationState("invalid");
+        }
       }
     },
-    [getValues, setValue]
+    []
   );
 
   useEffect(() => {
@@ -98,49 +142,51 @@ export const CampaignForm = ({
     validateImageUrl(debouncedValueVertical, "vertical");
   }, [debouncedValueVertical, validateImageUrl]);
 
-  const handleImageUrlChange = useCallback(
-    (value: string, isValid: boolean, type: "vertical" | "horizontal") => {
-      if (isValid) {
-        setValue(
-          type === "vertical" ? "verticalBanner" : "horizontalBanner",
-          value
-        );
-      }
-    },
-    [setValue]
-  );
-
   const onSubmit = useCallback(async (data: FormData) => {
-    console.log(data);
-  }, []);
+    const formattedData = {
+      nomeCampanha: data.title,
+      descricao: data.description,
+      urlImagem: data.horizontalBanner,
+      urlLink: data.link,
+      dataInicial: format(data.startDate, "yyyy-MM-dd"),
+      dataFinal: format(data.endDate, "yyyy-MM-dd"),
+      status: data.status === "active" ? true : false,
+      cpfProprietario: "16232350731",
+    }
+
+    try {
+      await createCampaignMutation.mutateAsync(formattedData);
+
+      handleSetPrefilledValues(null);
+      reset();
+    } catch (error) {
+      console.error("Erro ao criar campanha", error);
+    }
+  }, [createCampaignMutation, handleSetPrefilledValues, reset, prefilledValues]);
 
   useEffect(() => {
     if (prefilledValues) {
-      setValue("title", prefilledValues.descricao);
+      setValue("title", prefilledValues.nomeCampanha);
       setValue("verticalBanner", prefilledValues.urlImagem);
       setValue("horizontalBanner", prefilledValues.urlImagem);
       setValue("description", prefilledValues.descricao);
       setValue("status", prefilledValues.status ? "active" : "inactive");
       setValue(
         "startDate",
-        typeof prefilledValues.dataInicial === "string"
-          ? prefilledValues.dataInicial
-          : prefilledValues.dataInicial.toISOString()
+        prefilledValues.dataInicial ? parseDateAsLocal(prefilledValues.dataInicial) : new Date()
       );
       setValue(
         "endDate",
-        typeof prefilledValues.dataFinal === "string"
-          ? prefilledValues.dataFinal
-          : prefilledValues.dataFinal.toISOString()
+        prefilledValues.dataFinal ? parseDateAsLocal(prefilledValues.dataFinal) : new Date()
       );
     } else {
       setValue("title", "");
       setValue("verticalBanner", "");
       setValue("horizontalBanner", "");
       setValue("description", "");
-      setValue("status", "inactive");
-      setValue("startDate", "");
-      setValue("endDate", "");
+      setValue("status", "active");
+      setValue("startDate", new Date());
+      setValue("endDate", new Date());
     }
   }, [prefilledValues, setValue]);
 
@@ -148,13 +194,16 @@ export const CampaignForm = ({
     <form onSubmit={handleSubmit(onSubmit)}>
       <div>
         <div className="grid w-full items-center gap-3 mb-6">
-          <Label htmlFor="Title">Título</Label>
+          <Label htmlFor="nomeCampanha">Título</Label>
           <Input
             type="text"
-            id="title"
+            id="nomeCampanha"
             placeholder="Título da campanha"
             {...register("title")}
           />
+          {errors.title && (
+            <p className="text-sm text-[var(--error-400)]">{errors.title.message}</p>
+          )}
         </div>
       </div>
 
@@ -209,6 +258,9 @@ export const CampaignForm = ({
           id="description"
           {...register("description")}
         />
+        {errors.description && (
+          <p className="text-sm text-[var(--error-400)]">{errors.description.message}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-16">
@@ -218,13 +270,7 @@ export const CampaignForm = ({
           </Label>
           <Controller
             name="status"
-            defaultValue={
-              prefilledValues?.status
-                ? prefilledValues.status
-                  ? "active"
-                  : "inactive"
-                : undefined
-            }
+            defaultValue={prefilledValues?.status ? prefilledValues.status ? "active" : "inactive" : "active"}
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
@@ -234,7 +280,6 @@ export const CampaignForm = ({
                 <SelectContent>
                   <SelectItem value="active">Ativo</SelectItem>
                   <SelectItem value="inactive">Inativo</SelectItem>
-                  <SelectItem value="draft">Rascunho</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -250,7 +295,9 @@ export const CampaignForm = ({
                 date={field.value ? new Date(field.value) : undefined}
                 onChange={field.onChange}
                 name={field.name}
-                defaultValue={prefilledValues?.dataInicial}
+                defaultValue={prefilledValues?.dataInicial
+                  ? parseDateAsLocal(prefilledValues.dataInicial)
+                  : undefined}
               />
             </div>
           )}
@@ -265,8 +312,11 @@ export const CampaignForm = ({
                 date={field.value ? new Date(field.value) : undefined}
                 onChange={field.onChange}
                 name={field.name}
-                defaultValue={prefilledValues?.dataFinal}
+                defaultValue={prefilledValues?.dataFinal ? new Date(prefilledValues.dataFinal) : undefined}
               />
+              {errors.endDate && (
+                <p className="text-sm text-[var(--error-400)]">{errors.endDate.message}</p>
+              )}
             </div>
           )}
         />
@@ -286,7 +336,7 @@ export const CampaignForm = ({
             className="text-[var(--error-400)] hover:text-[var(--error-600)] hover:bg-transparent cursor-pointer"
             onClick={() => handleSetPrefilledValues(null)}
           >
-            Limpar
+            Nova Campanha
           </Button>
         )}
       </div>

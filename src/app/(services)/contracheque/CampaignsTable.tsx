@@ -1,4 +1,3 @@
-"use client";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -10,22 +9,17 @@ import {
 } from "@/components/ui/table";
 import { STATUS_COLORS } from "@/utils/constants";
 import { Campaign } from "@/utils/types";
-import { useQuery } from "@tanstack/react-query";
-import obterCampanhasProprietario from "@/api/obterCampanhas";
+import { parseDateAsLocal } from "@/utils/parseDate";
 
 type CampaignsTableProps = {
   handleSetDefaultCampaign: (campaign: Campaign) => void;
+  campaigns: Campaign[];
 };
 
 export const CampaignsTable = ({
   handleSetDefaultCampaign,
+  campaigns,
 }: CampaignsTableProps) => {
-
-  const query = useQuery({
-    queryKey: ["campaigns"],
-    queryFn: () =>
-      obterCampanhasProprietario(),
-  });
 
   return (
     <Table>
@@ -40,7 +34,7 @@ export const CampaignsTable = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {query.data?.map((campaign) => {
+        {campaigns.map((campaign) => {
           if (!campaign) return null;
           return (
             <TableRow
@@ -50,7 +44,7 @@ export const CampaignsTable = ({
             >
               <TableCell className="font-medium">{campaign.id}</TableCell>
               <TableCell className="font-medium">
-                {campaign.descricao}
+                {campaign.nomeCampanha}
               </TableCell>
               <TableCell>{campaign.urlLink}</TableCell>
               <TableCell>
@@ -63,10 +57,10 @@ export const CampaignsTable = ({
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
-                {new Date(campaign.dataInicial).toLocaleDateString("pt-BR")}
+                {parseDateAsLocal(campaign.dataInicial).toLocaleDateString("pt-BR")}
               </TableCell>
               <TableCell className="text-right">
-                {new Date(campaign.dataFinal).toLocaleDateString("pt-BR")}
+                {parseDateAsLocal(campaign.dataFinal).toLocaleDateString("pt-BR")}
               </TableCell>
             </TableRow>
           );

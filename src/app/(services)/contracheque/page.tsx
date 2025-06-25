@@ -5,6 +5,8 @@ import { CampaignsTable } from "./CampaignsTable";
 import { Campaign } from "@/utils/types";
 import { schema } from "@/schemas/campaign_form.schema";
 import { z } from "zod";
+import obterCampanhasProprietario from "@/api/obterCampanhas";
+import { useQuery } from "@tanstack/react-query";
 
 // const campaigns: Campaign[] = [
 //   {
@@ -44,6 +46,12 @@ export default function Contracheque() {
     setDefaultCampaign(campaign);
   }, []);
 
+  const campaignsQuery = useQuery({
+    queryKey: ["campaigns"],
+    queryFn: () =>
+      obterCampanhasProprietario(),
+  });
+
   return (
     <div className="w-full max-w-[1200px] mx-auto px-4 ">
       <header className="flex justify-between items-center mb-8">
@@ -67,6 +75,7 @@ export default function Contracheque() {
             </h2>
             <CampaignsTable
               handleSetDefaultCampaign={handleSetDefaultCampaign}
+              campaigns={campaignsQuery.data || []}
             />
           </div>
         </div>
