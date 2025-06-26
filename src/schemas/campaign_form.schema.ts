@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const schema = z
   .object({
+    id: z.number().optional().nullable(),
     title: z
       .string()
       .max(15, { message: 'O título deve ter no máximo 15 caracteres' })
@@ -15,7 +16,7 @@ export const schema = z
     verticalBanner: z
       .string()
       .min(1, { message: 'O banner vertical é obrigatório' }),
-    link: z.string().optional().nullable(),
+    link: z.string().nullable(),
     status: z.enum(['active', 'inactive']),
     startDate: z.date(),
     endDate: z.date(),

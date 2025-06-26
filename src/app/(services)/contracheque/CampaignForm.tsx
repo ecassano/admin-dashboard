@@ -24,6 +24,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { criarCampanha } from "@/api/criarCampanha";
 import { toast } from "sonner";
 import { parseDateAsLocal } from "@/utils/parseDate";
+import { atualizarCampanha } from "@/api/atualizarCampanha";
 
 export type ValidationState = "idle" | "loading" | "valid" | "invalid";
 
@@ -40,11 +41,12 @@ export const CampaignForm = ({
     useForm<FormData>({
       resolver: zodResolver(schema),
       defaultValues: {
+        id: prefilledValues?.id || undefined,
         title: prefilledValues?.nomeCampanha || "",
         description: prefilledValues?.descricao || "",
         horizontalBanner: prefilledValues?.urlImagem || "",
         verticalBanner: prefilledValues?.urlImagem || "",
-        link: prefilledValues?.urlLink || "",
+        link: prefilledValues?.urlLink || null,
         status: prefilledValues?.status ? prefilledValues.status ? "active" : "inactive" : "active",
         startDate: prefilledValues?.dataInicial ? new Date(prefilledValues.dataInicial) : undefined,
         endDate: prefilledValues?.dataFinal ? new Date(prefilledValues.dataFinal) : undefined,
@@ -88,13 +90,29 @@ export const CampaignForm = ({
     },
   });
 
-  // const updateCampaignMutation = useMutation({
-  //   mutationFn: atualizarCampanha,
-  //   onSuccess: (res) => {
-  //     console.log("Campanha atualizada com sucesso!", res);
-  //   },
-  //   onError: (err) => {
-  // });
+  const updateCampaignMutation = useMutation({
+    mutationFn: atualizarCampanha,
+    onSuccess: () => {
+      toast.success("Campanha atualizada com sucesso!", {
+        style: {
+          background: "var(--secondary-400)",
+          color: "var(--white)",
+          border: "none",
+        }
+      });
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+    onError: (err) => {
+      console.error("Erro ao atualizar campanha", err);
+      toast.error("Erro ao atualizar campanha", {
+        style: {
+          background: "var(--error-400)",
+          color: "var(--white)",
+          border: "none",
+        }
+      });
+    },
+  });
 
   const validateImageUrl = useCallback(
     async (url: string, type: "vertical" | "horizontal") => {
@@ -155,20 +173,29 @@ export const CampaignForm = ({
     }
 
     try {
-      await createCampaignMutation.mutateAsync(formattedData);
+      if (prefilledValues) {
+        if (!data.id) {
+          throw new Error("ID da campanha é obrigatório");
+        }
+        await updateCampaignMutation.mutateAsync({ id: data.id, ...formattedData });
+      } else {
+        await createCampaignMutation.mutateAsync(formattedData);
+      }
 
       handleSetPrefilledValues(null);
       reset();
     } catch (error) {
       console.error("Erro ao criar campanha", error);
     }
-  }, [createCampaignMutation, handleSetPrefilledValues, reset, prefilledValues]);
+  }, [createCampaignMutation, updateCampaignMutation, handleSetPrefilledValues, reset, prefilledValues]);
 
   useEffect(() => {
     if (prefilledValues) {
+      setValue("id", prefilledValues.id);
       setValue("title", prefilledValues.nomeCampanha);
       setValue("verticalBanner", prefilledValues.urlImagem);
       setValue("horizontalBanner", prefilledValues.urlImagem);
+      setValue("link", prefilledValues.urlLink);
       setValue("description", prefilledValues.descricao);
       setValue("status", prefilledValues.status ? "active" : "inactive");
       setValue(
@@ -183,6 +210,7 @@ export const CampaignForm = ({
       setValue("title", "");
       setValue("verticalBanner", "");
       setValue("horizontalBanner", "");
+      setValue("link", null);
       setValue("description", "");
       setValue("status", "active");
       setValue("startDate", new Date());

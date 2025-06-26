@@ -2,11 +2,28 @@ import { Campaign } from '@/utils/types'
 
 export const atualizarCampanha = async (campanha: Campaign) => {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/atualizarServico`,
+    `${process.env.NEXT_PUBLIC_API_URL}/alterarServico/eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJMWUFNbUUwVUZBd1hyUXJGbEgwSlNrMmtCR3FSblFiMDFWRG55a3R1UE5NIn0.eyJqdGkiOiI0M2QxMjkyMS0wYzkwLTQyYTItOGI2MC0yNGE2YzVhMzgzMzYiLCJleHAiOjE3NTA5NTU5MzMsIm5iZiI6MCwiaWF0IjoxNzUwOTU1MzMzLCJpc3MiOiJodHRwczovL2F1dGgtaWRyaW9ob20uYXBwcy5yaW8uZ292LmJyL2F1dGgvcmVhbG1zL2lkcmlvX2NpZGFkYW8iLCJhdWQiOlsiYnJva2VyIiwiYWNjb3VudCJdLCJzdWIiOiI2MGZlMWE0Yi1mMmUyLTQyN2QtODFiMC1kZTVhMGM4ZDU1YmQiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJjb250cmFjaGVxdWUtYXBpLmFwcHMub2NwLnJpby5nb3YuYnIiLCJub25jZSI6IjMwN2I2ZGYzLTg0NzktNDJiMS1hZjVlLWNhMTdjMDFiOTY0NCIsImF1dGhfdGltZSI6MTc1MDk1MzUzMCwic2Vzc2lvbl9zdGF0ZSI6ImIyODM1ODEzLTFjYWQtNDI1MC1hZDg5LTA2NGE4M2RlMDRiNSIsImFjciI6IjAiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cHM6Ly9jb250cmFjaGVxdWVkZXYuYXBwcy5vY3AucmlvLmdvdi5iciIsImh0dHBzOi8vYXBpLWRpcmZob20uYXBwcy5vY3AucmlvLmdvdi5iciIsImh0dHBzOi8vY29udHJhY2hlcXVlaG9tLmFwcHMub2NwLnJpby5nb3YuYnIiLCJodHRwczovL2FwaS1jb250cmFjaGVxdWVob20uYXBwcy5vY3AucmlvLmdvdi5iciIsImh0dHBzOi8vYXBpLWRpcmZkZXYuYXBwcy5vY3AucmlvLmdvdi5iciIsImh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsImh0dHBzOi8vYXBpLWNvbnRyYWNoZXF1ZWRldi5hcHBzLm9jcC5yaW8uZ292LmJyIiwiaHR0cDovL2xvY2FsaG9zdDozMDAwIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsImNhcmlvY2EtcmlvIiwidW1hX2F1dGhvcml6YXRpb24iLCJ1c2VyIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYnJva2VyIjp7InJvbGVzIjpbInJlYWQtdG9rZW4iXX0sImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmFtZSI6IkVEVUFSRE8gQU5UT05JTyBDQVNTQU5PIERFIFPDgSIsInByZWZlcnJlZF91c2VybmFtZSI6IjE2MjMyMzUwNzMxIiwiZ2l2ZW5fbmFtZSI6IkVEVUFSRE8iLCJmYW1pbHlfbmFtZSI6IkFOVE9OSU8gQ0FTU0FOTyBERSBTw4EiLCJlbWFpbCI6ImVkdWFyZG9jYXNzYW5vZGVzYUB1b2wuY29tLmJyIn0.A02NmEjEbJpR9Y8SF0wpsL-oj3nSRDMHs1_SJeKKQN-PklJhUdfyyGdrqVNYvlJXf-uUSzdTLQHDgndS34nFwxlm08LQTfvJ5uhSvwxZu7eiYHrquhS_vhNssjG0MbHNOhO0dfSJbbb6WapKOtF-V_NGtRkC9RSmdGVFO2w-RB0PFVOkcqezDxDnIcCa1Tfa0nM8iyDd_wJY_pQB9GHIY3uHsD8LB0BXKFWY6cHtgEI8piuYi_sJm_zTPPtEWrd6JMtw3wTmHVlYhXBElEDt5CcJGjKjmqnfvA7vzo6TLXYxieUT5sc9PQhn7_PNP1rN88r4mG9_JsxAG7oGNZroJA`,
     {
-      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'PUT',
       body: JSON.stringify(campanha),
     }
   )
-  return response.json()
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+
+  const text = await response.text()
+  if (!text) {
+    return { success: true }
+  }
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { success: true, message: text }
+  }
 }
