@@ -6,6 +6,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { Header } from "@/components/Header";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { ReduxProvider } from "@/providers/ReduxProvider";
 
 const roboto = Roboto({
   weight: ["300", "400", "500", "700"],
@@ -27,14 +28,16 @@ export default function RootLayout({
     <html lang="en">
       <body className={roboto.className}>
         <ReactQueryProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <div className="w-full flex flex-col gap-4">
-              <Header />
-              {children}
-            </div>
-            <Toaster position="top-right" richColors />
-          </SidebarProvider>
+          <ReduxProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <div className="w-full flex flex-col gap-4">
+                <Header />
+                {children}
+              </div>
+              <Toaster position="top-right" richColors />
+            </SidebarProvider>
+          </ReduxProvider>
         </ReactQueryProvider>
       </body>
     </html>

@@ -1,5 +1,4 @@
 "use client";
-
 import {
   Sidebar,
   SidebarContent,
@@ -10,9 +9,15 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import { keycloak } from "@/config/keycloak";
+import { initialize } from "@/config/keycloak";
+import { userInfoActions } from "@/redux/features/user-info";
+import { AppDispatch, useAppSelector } from "@/redux/store";
 import { Home, Banknote } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
 
 const menuItems = [
   { title: "Início", href: "/", icon: Home },
@@ -21,6 +26,30 @@ const menuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+
+  const userInfo = useAppSelector((state) => state.userInfo);
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    initialize().then(() => {
+      if (!keycloak.authenticated && userInfo.logged === "not-logged") {
+        dispatch(userInfoActions.setLogged("logging"));
+        keycloak.login();
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (!keycloak.authenticated && userInfo.logged === "logging") {
+        dispatch(userInfoActions.setLogged("logging"));
+        keycloak.login();
+      }
+    }, 1000);
+    return () => clearInterval(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Sidebar collapsible="icon">
